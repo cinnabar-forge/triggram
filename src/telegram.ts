@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { sendTelegramMessage } from "cinnagram";
 import https from "https";
 
@@ -12,6 +13,7 @@ const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT
 const SPECIFIC_CHAT_ID = parseInt(process.env.TELEGRAM_CHAT_ID || "") || 0;
 const TELEGRAM_API_POLLING_TIME =
   parseInt(process.env.TELEGRAM_API_POLLING_TIME || "30") || 30;
+const APP_START_TIME = Date.now() / 1000;
 
 let lastUpdateId = 0;
 
@@ -153,54 +155,51 @@ function getTimeLeft(future: number) {
  * @param config
  */
 function handleUpdate(update: any, config: Config) {
-  if (update.message && update.message.text) {
-    const messageText = processMessageText(update.message.text);
-    const chatId = update.message.chat.id;
-    const senderInfo = getSenderInfo(update);
+  if (!update.message || !update.message.text) {
+    return;
+  }
 
-    if (!SPECIFIC_CHAT_ID || chatId === SPECIFIC_CHAT_ID) {
-      console.log(`Accept ${senderInfo}: ${messageText}`);
-      const acceptableTriggers: { group: TriggerGroup; trigger: string }[] = [];
+  const senderInfo = getSenderInfo(update);
 
-      for (const group of config.groups) {
-        for (const word of group.triggers) {
-          // eslint-disable-next-line security/detect-non-literal-regexp
-          const regex = new RegExp(`(^|\\P{L})${word}($|\\P{L})`, "iu");
-          if (regex.test(messageText)) {
-            if (
-              group.futureTrigger &&
-              Date.now() < group.futureTrigger[chatId]
-            ) {
-              console.log(
-                `Skipping group ${group.name} due to time threshold (~${getTimeLeft(group.futureTrigger[chatId])} minutes left)`,
-              );
-              break;
-            }
-            console.log(
-              `Found acceptable trigger: ${word} in group ${group.name}`,
-            );
-            acceptableTriggers.push({ group, trigger: word });
-          }
+  if (update.message.date <= APP_START_TIME) {
+    console.log("Reject outdated message from", senderInfo);
+    return;
+  }
+
+  const messageText = processMessageText(update.message.text);
+  const chatId = update.message.chat.id;
+
+  if (SPECIFIC_CHAT_ID && chatId !== SPECIFIC_CHAT_ID) {
+    console.log("Reject", senderInfo);
+    return;
+  }
+
+  console.log(`Accept ${senderInfo}: ${messageText}`);
+  const acceptableTriggers: { group: TriggerGroup; trigger: string }[] = [];
+
+  for (const group of config.groups) {
+    for (const word of group.triggers) {
+      // eslint-disable-next-line security/detect-non-literal-regexp
+      const regex = new RegExp(`(^|\\P{L})${word}($|\\P{L})`, "iu");
+      if (regex.test(messageText)) {
+        if (group.futureTrigger && Date.now() < group.futureTrigger[chatId]) {
+          console.log(
+            `Skipping group ${group.name} due to time threshold (~${getTimeLeft(group.futureTrigger[chatId])} minutes left)`,
+          );
+          break;
         }
+        console.log(`Found acceptable trigger: ${word} in group ${group.name}`);
+        acceptableTriggers.push({ group, trigger: word });
       }
-
-      if (acceptableTriggers.length > 0) {
-        const selectedTrigger =
-          acceptableTriggers[
-            Math.floor(Math.random() * acceptableTriggers.length)
-          ];
-        console.log(
-          `Selected trigger ${selectedTrigger.trigger} from group ${selectedTrigger.group.name}`,
-        );
-        sendReply(
-          config,
-          selectedTrigger.group,
-          chatId,
-          update.message.message_id,
-        );
-      }
-    } else {
-      console.log("Reject", senderInfo);
     }
+  }
+
+  if (acceptableTriggers.length > 0) {
+    const selectedTrigger =
+      acceptableTriggers[Math.floor(Math.random() * acceptableTriggers.length)];
+    console.log(
+      `Selected trigger ${selectedTrigger.trigger} from group ${selectedTrigger.group.name}`,
+    );
+    sendReply(config, selectedTrigger.group, chatId, update.message.message_id);
   }
 }
