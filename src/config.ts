@@ -11,8 +11,8 @@ export function loadConfig(configPath: string): Config {
   const configPathResolved = path.resolve(configPath);
   const fileContent = fs.readFileSync(configPathResolved, "utf-8");
   const config: Config = JSON.parse(fileContent);
-  config.groups.forEach((group) => {
-    group.name = `${group.triggers[0]}-${group.triggers.length}-${group.replies.length}`;
+  config.groups.forEach((group, index) => {
+    group.name = `${group.triggers[0]}-${group.triggers.length}-${group.replies.length}-${index}`;
     group.triggers = group.triggers.map((trigger) => trigger.toLowerCase());
     group.futureTrigger = {};
     if (!group.timeThresholdMin && !group.timeThresholdMax) {
@@ -24,5 +24,13 @@ export function loadConfig(configPath: string): Config {
       group.timeThresholdMax = group.timeThresholdMin;
     }
   });
+  if (!config.replyThresholdMin && !config.replyThresholdMax) {
+    config.replyThresholdMin = 10;
+    config.replyThresholdMax = 40;
+  } else if (!config.replyThresholdMin) {
+    config.replyThresholdMin = config.replyThresholdMax;
+  } else if (!config.replyThresholdMax) {
+    config.replyThresholdMax = config.replyThresholdMin;
+  }
   return config;
 }

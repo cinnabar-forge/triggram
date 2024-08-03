@@ -94,26 +94,49 @@ function getRandomTimeThreshold(group: TriggerGroup): number {
 
 /**
  *
+ * @param config
  * @param group
  * @param chatId
  * @param messageId
  */
 function sendReply(
+  config: Config,
   group: TriggerGroup,
   chatId: number,
   messageId: number,
 ): void {
+  const { replyThresholdMax, replyThresholdMin } = config;
+  const delay =
+    replyThresholdMin === 0 && replyThresholdMax === 0
+      ? 0
+      : Math.floor(
+          Math.random() * (replyThresholdMax - replyThresholdMin + 1) +
+            replyThresholdMin,
+        );
+
   const replyIndex = Math.floor(Math.random() * group.replies.length);
   const reply = group.replies[replyIndex];
-  console.log(`Sending reply: ${reply} to chatId: ${chatId}`);
-  sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, reply, "html", {
-    reply_parameters: { message_id: messageId },
-  });
+  console.log(
+    `Sending reply "${reply}" to message ${messageId} in chatId ${chatId} in ${delay} seconds`,
+  );
   group.futureTrigger[chatId] =
     Date.now() + getRandomTimeThreshold(group) * 60000;
   console.log(
     `Updated futureTrigger for group ${group.name}: next in ~${getTimeLeft(group.futureTrigger[chatId])} minutes`,
   );
+
+  const sendMessage = () => {
+    console.log(`Reply to message ${messageId} in chatId ${chatId} sent`);
+    sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, reply, "html", {
+      reply_parameters: { message_id: messageId },
+    });
+  };
+
+  if (delay === 0) {
+    sendMessage();
+  } else {
+    setTimeout(sendMessage, delay * 1000);
+  }
 }
 
 /**
@@ -167,7 +190,12 @@ function handleUpdate(update: any, config: Config) {
         console.log(
           `Selected trigger ${selectedTrigger.trigger} from group ${selectedTrigger.group.name}`,
         );
-        sendReply(selectedTrigger.group, chatId, update.message.message_id);
+        sendReply(
+          config,
+          selectedTrigger.group,
+          chatId,
+          update.message.message_id,
+        );
       }
     } else {
       console.log("Reject", senderInfo);

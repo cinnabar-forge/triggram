@@ -9,6 +9,8 @@ export interface TriggerGroup {
 
 export interface Config {
   groups: TriggerGroup[];
+  replyThresholdMax: number;
+  replyThresholdMin: number;
   timeThresholdMax: number;
   timeThresholdMin: number;
 }
