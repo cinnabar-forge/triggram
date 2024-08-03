@@ -164,7 +164,9 @@ function handleUpdate(update: any, config: Config) {
 
       for (const group of config.groups) {
         for (const word of group.triggers) {
-          if (messageText.includes(word)) {
+          // eslint-disable-next-line security/detect-non-literal-regexp
+          const regex = new RegExp(`(^|\\P{L})${word}($|\\P{L})`, "iu");
+          if (regex.test(messageText)) {
             if (
               group.futureTrigger &&
               Date.now() < group.futureTrigger[chatId]
