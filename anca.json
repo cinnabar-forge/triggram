@@ -1,0 +1,46 @@
+{
+  "authors": [
+    {
+      "name": "Timur Moziev",
+      "github": "TimurRin",
+      "email": "timur.moziev@gmail.com",
+      "type": "maintainer",
+      "url": "https://timurrin.github.io/"
+    }
+  ],
+  "cinnabarMeta": {
+    "dataVersion": 0,
+    "version": {
+      "latest": "0.1.0",
+      "latestNext": "0.1.0+next.20240803_193600",
+      "timestamp": 1722713760
+    },
+    "files": [
+      {
+        "path": "./package.json",
+        "type": "nodejs-package-json"
+      },
+      {
+        "path": "./package-lock.json",
+        "type": "nodejs-package-lock-json"
+      },
+      {
+        "path": "./src/cinnabar.ts",
+        "type": "typescript",
+        "updateBuild": true
+      }
+    ],
+    "repo": {
+      "type": "github",
+      "value": "cinnabar-forge/triggram"
+    },
+    "updateChangelog": true
+  },
+  "development": {
+    "nodejsSeaModules": {
+      "sqlite3": true
+    }
+  },
+  "type": "app",
+  "stack": "nodejs"
+}
