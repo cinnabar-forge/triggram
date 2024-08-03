@@ -109,9 +109,10 @@ function sendReply(
   sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, reply, "html", {
     reply_parameters: { message_id: messageId },
   });
-  group.futureTrigger = Date.now() + getRandomTimeThreshold(group) * 60000;
+  group.futureTrigger[chatId] =
+    Date.now() + getRandomTimeThreshold(group) * 60000;
   console.log(
-    `Updated futureTrigger for group ${group.name}: next in ~${getTimeLeft(group.futureTrigger)} minutes`,
+    `Updated futureTrigger for group ${group.name}: next in ~${getTimeLeft(group.futureTrigger[chatId])} minutes`,
   );
 }
 
@@ -141,15 +142,18 @@ function handleUpdate(update: any, config: Config) {
       for (const group of config.groups) {
         for (const word of group.triggers) {
           if (messageText.includes(word)) {
-            console.log(
-              `Found acceptable trigger: ${word} in group ${group.name}`,
-            );
-            if (group.futureTrigger && Date.now() < group.futureTrigger) {
+            if (
+              group.futureTrigger &&
+              Date.now() < group.futureTrigger[chatId]
+            ) {
               console.log(
-                `Skipping group ${group.name} due to time threshold (~${getTimeLeft(group.futureTrigger)} minutes left)`,
+                `Skipping group ${group.name} due to time threshold (~${getTimeLeft(group.futureTrigger[chatId])} minutes left)`,
               );
               break;
             }
+            console.log(
+              `Found acceptable trigger: ${word} in group ${group.name}`,
+            );
             acceptableTriggers.push({ group, trigger: word });
           }
         }
@@ -164,10 +168,6 @@ function handleUpdate(update: any, config: Config) {
           `Selected trigger ${selectedTrigger.trigger} from group ${selectedTrigger.group.name}`,
         );
         sendReply(selectedTrigger.group, chatId, update.message.message_id);
-      } else {
-        console.log(
-          `No acceptable triggers found for message '${messageText}'`,
-        );
       }
     } else {
       console.log("Reject", senderInfo);

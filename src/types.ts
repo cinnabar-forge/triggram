@@ -1,5 +1,5 @@
 export interface TriggerGroup {
-  futureTrigger?: number;
+  futureTrigger: Record<number, number>;
   name: string;
   replies: string[];
   timeThresholdMax: number;

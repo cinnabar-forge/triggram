@@ -14,6 +14,7 @@ export function loadConfig(configPath: string): Config {
   config.groups.forEach((group) => {
     group.name = `${group.triggers[0]}-${group.triggers.length}-${group.replies.length}`;
     group.triggers = group.triggers.map((trigger) => trigger.toLowerCase());
+    group.futureTrigger = {};
     if (!group.timeThresholdMin && !group.timeThresholdMax) {
       group.timeThresholdMin = 1;
       group.timeThresholdMax = 60;
