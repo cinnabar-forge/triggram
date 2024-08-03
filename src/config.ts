@@ -9,6 +9,7 @@ import { Config } from "./types.js";
  */
 export function loadConfig(configPath: string): Config {
   const configPathResolved = path.resolve(configPath);
+  console.log("Loading config", configPathResolved);
   const fileContent = fs.readFileSync(configPathResolved, "utf-8");
   const config: Config = JSON.parse(fileContent);
   config.groups.forEach((group, index) => {
