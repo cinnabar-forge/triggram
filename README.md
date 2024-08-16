@@ -1,8 +1,8 @@
-# triggram
+# Triggram
 
 > **DISCLAIMER**: This project is not production ready. All versions below 1.0.0 should be considered unstable
 
-KZ.GOV UZOGA parser
+Telegram chat trigger
 
 ## Installation
 
@@ -16,9 +16,7 @@ npm install -g triggram
 
 Visit [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-Current maintainers:
-
-- Timur Moziev ([@TimurRin](https://github.com/TimurRin))
+Current maintainer - Timur Moziev ([@TimurRin](https://github.com/TimurRin))
 
 ## License
 

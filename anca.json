@@ -4,7 +4,8 @@
       "name": "Timur Moziev",
       "github": "TimurRin",
       "email": "timur.moziev@gmail.com",
-      "type": "maintainer",
+      "type": "author",
+      "status": "active",
       "url": "https://timurrin.github.io/"
     }
   ],
@@ -39,6 +40,10 @@
     "nodejsSeaModules": {
       "sqlite3": true
     }
+  },
+  "namings": {
+    "npmPackage": "triggram",
+    "text": "Triggram"
   },
   "type": "app",
   "stack": "nodejs"

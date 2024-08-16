@@ -1,36 +1,41 @@
 {
   "name": "triggram",
   "version": "0.1.0",
-  "private": true,
   "description": "Telegram chat trigger",
   "keywords": [
     "api"
   ],
   "license": "ISC",
   "author": {
-    "name": "Timur Moziev",
     "email": "timur.moziev@gmail.com",
-    "url": "https://timurrin.github.io"
+    "name": "Timur Moziev",
+    "url": "https://timurrin.github.io/"
   },
-  "type": "module",
-  "main": "dist/index.js",
-  "bin": {},
   "files": [
     "bin",
     "dist"
   ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cinnabar-forge/triggram.git"
+  },
   "scripts": {
     "build": "node esbuild.js",
+    "build:bundle": "node esbuild.js full",
     "build:dev": "tsc",
     "build:sea": "node sea.build.js",
     "dev": "tsc-watch",
     "fix": "prettier . --write && eslint --fix .",
     "format": "prettier . --write",
     "lint": "eslint --fix .",
+    "prepack": "npm run build",
     "test": "prettier . -c && eslint --max-warnings 0 . && tsc && mocha './build/dev/test'"
   },
   "dependencies": {
-    "cinnagram": "0.2.0",
+    "cinnagram": "0.2.1",
     "clivo": "0.5.1",
     "dotenv": "16.4.5"
   },
@@ -39,22 +44,19 @@
     "@cinnabar-forge/meta": "0.3.1",
     "@types/chai": "4.3.17",
     "@types/mocha": "10.0.7",
-    "@types/node": "22.1.0",
+    "@types/node": "22.3.0",
     "chai": "5.1.1",
     "esbuild": "0.23.0",
-    "mocha": "10.7.0",
+    "mocha": "10.7.3",
     "pre-commit": "1.2.2",
     "tsc-watch": "6.2.0",
     "typescript": "5.5.4"
   },
   "engines": {
-    "node": ">=21"
+    "node": ">=18.0.0"
   },
   "pre-commit": [
     "test"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TimurRin/gov-kz-uzoga-bot.git"
-  }
+  "private": true
 }
