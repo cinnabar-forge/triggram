@@ -2,6 +2,7 @@
 import { sendTelegramMessage } from "cinnagram";
 import https from "https";
 
+import { MarkovChain } from "./markov.js";
 import { Config, TriggerGroup } from "./types.js";
 
 if (!process.env.TELEGRAM_BOT_TOKEN) {
@@ -101,13 +102,14 @@ function getRandomTimeThreshold(group: TriggerGroup): number {
  * @param chatId
  * @param messageId
  */
-function sendReply(
+function sendTriggeredReply(
   config: Config,
   group: TriggerGroup,
   chatId: number,
   messageId: number,
 ): void {
-  const { replyThresholdMax, replyThresholdMin } = config;
+  const replyThresholdMax = config.replyThresholdMax || 0;
+  const replyThresholdMin = config.replyThresholdMin || 0;
   const delay =
     replyThresholdMin === 0 && replyThresholdMax === 0
       ? 0
@@ -125,6 +127,44 @@ function sendReply(
     Date.now() + getRandomTimeThreshold(group) * 60000;
   console.log(
     `Updated futureTrigger for group ${group.name}: next in ~${getTimeLeft(group.futureTrigger[chatId])} minutes`,
+  );
+
+  const sendMessage = () => {
+    console.log(
+      `Triggered reply to message ${messageId} in chatId ${chatId} sent`,
+    );
+    sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, reply, "html", {
+      reply_parameters: { message_id: messageId },
+    });
+  };
+
+  if (delay === 0) {
+    sendMessage();
+  } else {
+    setTimeout(sendMessage, delay * 1000);
+  }
+}
+
+/**
+ *
+ * @param chatId
+ * @param messageId
+ * @param reply
+ */
+function sendReply(chatId: number, messageId: number, reply: string): void {
+  if (!reply) {
+    return;
+  }
+  const replyThresholdMax = 4;
+  const replyThresholdMin = 8;
+
+  const delay = Math.floor(
+    Math.random() * (replyThresholdMax - replyThresholdMin + 1) +
+      replyThresholdMin,
+  );
+
+  console.log(
+    `Sending reply "${reply}" to message ${messageId} in chatId ${chatId} in ${delay} seconds`,
   );
 
   const sendMessage = () => {
@@ -154,7 +194,7 @@ function getTimeLeft(future: number) {
  * @param update
  * @param config
  */
-function handleUpdate(update: any, config: Config) {
+async function handleUpdate(update: any, config: Config) {
   if (!update.message || !update.message.text) {
     return;
   }
@@ -177,19 +217,23 @@ function handleUpdate(update: any, config: Config) {
   console.log(`Accept ${senderInfo}: ${messageText}`);
   const acceptableTriggers: { group: TriggerGroup; trigger: string }[] = [];
 
-  for (const group of config.groups) {
-    for (const word of group.triggers) {
-      // eslint-disable-next-line security/detect-non-literal-regexp
-      const regex = new RegExp(`(^|\\P{L})${word}($|\\P{L})`, "iu");
-      if (regex.test(messageText)) {
-        if (group.futureTrigger && Date.now() < group.futureTrigger[chatId]) {
+  if (config.groups) {
+    for (const group of config.groups) {
+      for (const word of group.triggers) {
+        // eslint-disable-next-line security/detect-non-literal-regexp
+        const regex = new RegExp(`(^|\\P{L})${word}($|\\P{L})`, "iu");
+        if (regex.test(messageText)) {
+          if (group.futureTrigger && Date.now() < group.futureTrigger[chatId]) {
+            console.log(
+              `Skipping group ${group.name} due to time threshold (~${getTimeLeft(group.futureTrigger[chatId])} minutes left)`,
+            );
+            break;
+          }
           console.log(
-            `Skipping group ${group.name} due to time threshold (~${getTimeLeft(group.futureTrigger[chatId])} minutes left)`,
+            `Found acceptable trigger: ${word} in group ${group.name}`,
           );
-          break;
+          acceptableTriggers.push({ group, trigger: word });
         }
-        console.log(`Found acceptable trigger: ${word} in group ${group.name}`);
-        acceptableTriggers.push({ group, trigger: word });
       }
     }
   }
@@ -200,6 +244,36 @@ function handleUpdate(update: any, config: Config) {
     console.log(
       `Selected trigger ${selectedTrigger.trigger} from group ${selectedTrigger.group.name}`,
     );
-    sendReply(config, selectedTrigger.group, chatId, update.message.message_id);
+    sendTriggeredReply(
+      config,
+      selectedTrigger.group,
+      chatId,
+      update.message.message_id,
+    );
+    return;
+  }
+
+  const { markov } = config;
+
+  if (markov) {
+    const splittedMessageText = messageText.split(" ");
+    const randomWord =
+      splittedMessageText[
+        Math.floor(Math.random() * splittedMessageText.length)
+      ];
+
+    const markovChain = new MarkovChain(markov);
+
+    const answer = markovChain.generateSentence(
+      Math.random() * 50 + 10,
+      randomWord,
+      randomWord,
+    );
+
+    console.log(
+      `Generated a markov string '${answer}' based on '${randomWord}'`,
+    );
+
+    sendReply(chatId, update.message.message_id, answer);
   }
 }

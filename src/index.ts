@@ -19,14 +19,20 @@ async function main() {
 
   const result = parseCli({
     args: process.argv,
-    options: [{ letter: "c", name: "config" }],
+    options: [
+      { letter: "c", name: "config" },
+      { letter: "m", name: "markov" },
+    ],
   });
 
-  if (!result["config"]) {
+  const configPath = result["config"] && result["config"][0];
+  const markovPath = result["markov"] && result["markov"][0];
+
+  if (configPath || markovPath) {
+    startPolling(loadConfig(configPath, markovPath));
+  } else {
     throw new Error("Config file is required");
   }
-
-  startPolling(loadConfig(result["config"][0]));
 }
 
 main().catch(console.error);
